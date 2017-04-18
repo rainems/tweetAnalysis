@@ -22,9 +22,6 @@ def main():
         # search with query term and return 10
         results = twitter.search.tweets(q=query, count=50)
         
-        # return jsonify(results)
-        # app.logger.debug(results)
-
         templateData = {
             'title': 'Search results',
             'header' : 'Query: ' + query,

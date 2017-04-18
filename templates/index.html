@@ -10,6 +10,9 @@
 <!-- data block -->
 {% block data %}
 <ul>
+    {% if not tweets %}
+    No tweets to display. Sad!
+    {% endif %}
     {% for t in tweets %}
     <li>
         <p>
