@@ -17,62 +17,31 @@ twitter = Twitter(
 
 @app.route('/')
 def main():
+    query = request.args.get('q', False)
+    if query:
+        # search with query term and return 10
+        results = twitter.search.tweets(q=query, count=50)
+        
+        # return jsonify(results)
+        # app.logger.debug(results)
 
-	# fetch 3 tweets from my account
-	myTweets = twitter.statuses.user_timeline(count=10)
+        templateData = {
+            'title': 'Search results',
+            'header' : 'Query: ' + query,
+            'tweets' : results.get('statuses'),
+        }
 
-	# fetch 3 tweets from ITP_NYU
-	itpTweets = twitter.statuses.user_timeline(screen_name='itp_nyu', count=10)
-	
-	# app.logger.debug(itpTweets)
+    else:
+        # fetch 3 tweets from my account
+        myTweets = twitter.statuses.user_timeline(count=10)
 
-	templateData = {
-		'title' : 'My last three tweets',
-		'myTweets' : myTweets,
-		'itpTweets' : itpTweets
-	}
+        templateData = {
+            'title': 'My tweets',
+            'header' : 'My last three tweets',
+            'tweets' : myTweets,
+        }
 
-	return render_template('index.html', **templateData)
-
-
-@app.route('/search')
-def search():
-
-	# get search term from querystring 'q'
-	query = request.args.get('q','#redburns')
-
-	# search with query term and return 10
-	results = twitter.search.tweets(q=query, count=50)
-	
-	# return jsonify(results)
-	# app.logger.debug(results)
-
-	templateData = {
-		'query' : query,
-		'tweets' : results.get('statuses')
-	}
-
-	return render_template('search.html', **templateData)
-
-
-@app.route('/post', methods=['GET','POST'])
-def post_to_twitter():
-
-	if request.method == 'POST':
-		result = twitter.statuses.update(status=request.form.get('status'))
-
-		app.logger.debug(result)
-
-		# redirect to new twitter status post
-		return redirect('http://www.twitter.com/%s/status/%s' % (result['user']['screen_name'], result.get('id')))
-
-	else:
-		return render_template('post_to_twitter.html')
-
-	
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template('404.html'), 404
+    return render_template('index.html', **templateData)
 
 
 # This is a jinja custom filter
