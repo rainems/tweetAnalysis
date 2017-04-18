@@ -1,13 +1,19 @@
 {% extends 'base.html' %}
 
-<!-- page header -->
-{% block header %}
-<h1>{{header}}</h1> {% endblock %}
+{% block search %}
+Search for tweets or browse Raine's very cool tweets
+{% endblock %}
 
-<!-- search block -->
-{% block search %} I hope this works {% endblock %}
+{% block filters %}
+    <h1>{{header}}</h1>
+	<div class="input-group">
+		<input type="text" id="tweetSearchQuery" class="form-control" placeholder="Search for tweets">
+		<span class="input-group-btn">
+			<button class="btn btn-default" id="tweetSearchBtn" type="button">Go!</button>
+		</span>
+    </div><!-- /input-group -->
+{% endblock %}
 
-<!-- data block -->
 {% block data %}
 <ul>
     {% if not tweets %}
@@ -33,4 +39,24 @@
     {% endfor %}
 </ul>
 
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        /* Go to search page when you hit Go */
+        $('#tweetSearchBtn').click(function(e) {
+            let searchString = $('#tweetSearchQuery').val();
+            document.location.href = '/?q=' + searchString;
+        });
+
+        /* Also go to search when you press enter in search bar */
+		$('#tweetSearchQuery').keypress(function(e) {
+			let key = e.which;
+            if (key == 13) {  // enter key
+				$('#tweetSearchBtn').click();
+			}
+		});
+    });
+</script>
 {% endblock %}
