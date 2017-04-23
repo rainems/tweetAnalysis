@@ -137,9 +137,15 @@ class TweetAnalysis:
     self.test_data = self.training_data[:index_for_split]
     self.training_data = self.training_data[index_for_split:]
 
+
+   #Train classifier
   def buildTrainingModel(self):
     self.forest_classifier = skl.ensemble.RandomForestClassifier(n_estimators=50)
     self.forest_classifier = self.forest_classifier.fit()
+
+#Test classifier
+#Run on real Tweets
+
 
 if __name__ == "__main__":
   ta = TweetAnalysis()
