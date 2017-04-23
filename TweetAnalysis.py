@@ -7,7 +7,7 @@ import csv
 import math
 import sklearn as skl
 import numpy as np
-import cPickle
+import pickle
 import os
 
 kTestTrainingSplitRatio = 0.2
@@ -49,13 +49,13 @@ class TweetAnalysis:
     for r in self.api_response_raw['statuses']:
       self.tweets.append(
         {
-          "user":r['user']['screen_name'].encode("utf-8"),
-          "text":r['text'].encode("utf-8"),
-          "name":r['user']['name'],
-          "retweets":r['retweet_count'],
-          "favorites":r['favorite_count'],
+          "user":str(r['user']['screen_name'].encode("utf-8")),
+          "text":str(r['text'].encode("utf-8")),
+          "name":str(r['user']['name']),
+          "retweets":int(r['retweet_count']),
+          "favorites":int(r['favorite_count']),
           "created_at":r['created_at'],
-          "followers_count":r['user']['followers_count'],
+          "followers_count":int(r['user']['followers_count']),
           "sentiment":None
         })
       cnt = cnt + 1
@@ -114,7 +114,7 @@ class TweetAnalysis:
     pickle_filepath = filepath + ".pickle"
     if not os.path.isfile(pickle_filepath):
       print("Loading training data from {}, please wait...".format(filepath))
-      with open(filepath) as f:
+      with open(filepath, encoding="Latin-1") as f:
         for row in csv.DictReader(f, skipinitialspace=True):
           self.training_data.append(row)
       print("Loaded training data: {} tweets".format(len(self.training_data)))
@@ -123,12 +123,12 @@ class TweetAnalysis:
       self.training_data = self.clean(self.training_data)
       # dump the training data to a pickle file so we dont have to do this every time
       with open(pickle_filepath, "wb") as f:
-        cPickle.dump(self.training_data, f, cPickle.HIGHEST_PROTOCOL)
+        pickle.dump(self.training_data, f, pickle.HIGHEST_PROTOCOL)
       print("Wrote training data to pickle: {}".format(pickle_filepath))
     else:
       print("Found pickle file with training data.")
       print("Loading training set from: {}".format(pickle_filepath))
-      self.training_data = cPickle.load(open(pickle_filepath, "rb"))
+      self.training_data = pickle.load(open(pickle_filepath, "rb"))
 
     # split the training data into test and training sets
     size_of_dataset = len(self.training_data)
@@ -144,6 +144,5 @@ class TweetAnalysis:
 if __name__ == "__main__":
   ta = TweetAnalysis()
   ta.loadTrainingData("sentiment_training_set.csv")
-  # ta.fetchRaw("@united", 5)
-  # ta.setRaw(api_response_from_app)
-  # ta.tweets = ta.clean()
+  ta.fetchRaw("@united", 5)
+  ta.tweets = ta.clean(ta.tweets)
