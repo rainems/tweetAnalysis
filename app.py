@@ -20,22 +20,26 @@ def main():
     query = request.args.get('q', False)
     if query:
         # search with query term and return 10
-        results = twitter.search.tweets(q=query, count=50)
+        results = twitter.search.tweets(q=query, count=60).get('statuses')
         
         templateData = {
             'title': 'Search results',
             'header' : 'Query: ' + query,
-            'tweets' : results.get('statuses'),
+            'positive' : results[0:20],
+	    'neutral' : results[20:40],
+	    'negative' : results[40:60],
+	     
         }
 
     else:
+	myTweets = twitter.statuses.user_timeline(count=0)
         # fetch 3 tweets from my account
-        myTweets = twitter.statuses.user_timeline(count=10)
-
         templateData = {
-            'title': 'My tweets',
-            'header' : 'My last three tweets',
-            'tweets' : myTweets,
+            'title': 'Twitter Analysis',
+            'header' : 'Peep some tweets homie',
+            'positive' : None,
+	    'neutral' : None,
+	    'negative' : None,
         }
 
     return render_template('index.html', **templateData)

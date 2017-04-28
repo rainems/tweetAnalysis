@@ -1,11 +1,8 @@
 {% extends 'base.html' %}
 
-{% block search %}
-Search for tweets or browse Raine's very cool tweets
-{% endblock %}
-
 {% block filters %}
-    <h1>{{header}}</h1>
+    <h2>{{header}}</h2>
+    
 	<div class="input-group">
 		<input type="text" id="tweetSearchQuery" class="form-control" placeholder="Search for tweets">
 		<span class="input-group-btn">
@@ -14,30 +11,133 @@ Search for tweets or browse Raine's very cool tweets
     </div><!-- /input-group -->
 {% endblock %}
 
+
+<!-- data block -->
+
 {% block data %}
-<ul>
-    {% if not tweets %}
-    No tweets to display. Sad!
-    {% endif %}
-    {% for t in tweets %}
-    <li>
-        <p>
-            {{ t.text }}
-            <br>
-            <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
-            <br> {% if t.entities.urls%}
-            <br>
-            <i>tweet links</i>
-            <ol>
-                {% for url in t.entities.urls %}
-                <li><a href="{{url.expanded_url}}">{{url.expanded_url}}</a></li>
-                {% endfor %}
-            </ol>
-            {% endif %}
+
+
+
+
+<div class="panel-group">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" href="#collapse1">Negative Sentiment</a>
+        </h4>
+      </div>
+      <div id="collapse1" class="panel-collapse collapse">
+          
+          
+          <ul class="list-group">
+        {% if not negative %}
+        No tweets to display. Sad!
+        {% else %}
+        {% for t in negative %}
+        <li class="list-group-item">
+            <p>
+                {{ t.text }}
+                <br>
+                <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
+
+            <span class="badge">15</span>
         </p>
-    </li>
-    {% endfor %}
-</ul>
+
+        </li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+          
+        
+          
+          
+        <div class="panel-footer">Footer</div>
+      </div>
+    </div>
+  </div>
+
+<div class="panel-group">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" href="#collapse2">Neutral Sentiment</a>
+        </h4>
+      </div>
+      <div id="collapse2" class="panel-collapse collapse">
+          
+          
+          <ul class="list-group">
+        {% if not neutral %}
+        No tweets to display. Sad!
+        {% else %}
+        {% for t in neutral %}
+        <li class="list-group-item">
+            <p>
+                {{ t.text }}
+                <br>
+                <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
+
+            <span class="badge">15</span>
+        </p>
+
+        </li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+          
+        
+          
+          
+        <div class="panel-footer">Footer</div>
+      </div>
+    </div>
+  </div>
+
+
+<div class="panel-group">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" href="#collapse3">Positive Sentiment</a>
+        </h4>
+      </div>
+      <div id="collapse3" class="panel-collapse collapse">
+          
+          
+          <ul class="list-group">
+        {% if not positive %}
+        No tweets to display. Sad!
+        {% else %}
+        {% for t in positive %}
+        <li class="list-group-item">
+            <p>
+                {{ t.text }}
+                <br>
+                <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
+
+            <span class="badge">15</span>
+        </p>
+
+        </li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+          
+        
+          
+          
+        <div class="panel-footer">Footer</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+    
+
 
 {% endblock %}
 
