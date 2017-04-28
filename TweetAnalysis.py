@@ -5,12 +5,14 @@ import nltk
 import twitter
 import csv
 import math
-import sklearn as skl
+import sklearn.ensemble
+import sklearn.metrics
+import sklearn
 import numpy as np
 import pickle
 import os
 
-kTestTrainingSplitRatio = 0.2
+kTestTrainingSplitRatio = 0.3
 
 class TweetAnalysis:
   def __init__(self):
@@ -51,11 +53,11 @@ class TweetAnalysis:
         {
           "user":str(r['user']['screen_name'].encode("utf-8")),
           "text":str(r['text'].encode("utf-8")),
-          "name":str(r['user']['name']),
-          "retweets":int(r['retweet_count']),
-          "favorites":int(r['favorite_count']),
+          "name":str(r['user']['name'].encode("utf-8")),
+          "retweets":r['retweet_count'],
+          "favorites":r['favorite_count'],
           "created_at":r['created_at'],
-          "followers_count":int(r['user']['followers_count']),
+          "followers_count":r['user']['followers_count'],
           "sentiment":None
         })
       cnt = cnt + 1
@@ -104,7 +106,7 @@ class TweetAnalysis:
       tweet_dict['text'] = " ".join(tweet_text_split)
       # print(tweet_text_split)
       # print("After clean:\n{}".format(tweet_dict['text']))
-      if progress_cnt % 10000 == 0: 
+      if progress_cnt % 10000 == 0 and progress_cnt > 1: 
         print("Cleaning tweet {} of {} | {:0.1f} %".format(progress_cnt, len(list_of_tweets), (float(progress_cnt)/float(len(list_of_tweets))*100)))
       progress_cnt = progress_cnt + 1
     print("Cleaned {} tweets".format(len(list_of_tweets)))
@@ -114,13 +116,13 @@ class TweetAnalysis:
     pickle_filepath = filepath + ".pickle"
     if not os.path.isfile(pickle_filepath):
       print("Loading training data from {}, please wait...".format(filepath))
-      with open(filepath, encoding="Latin-1") as f:
+      with open(filepath) as f:
         for row in csv.DictReader(f, skipinitialspace=True):
           self.training_data.append(row)
       print("Loaded training data: {} tweets".format(len(self.training_data)))
       # clean our training data
-      print("Cleaning training data set. This could take a while...")
-      self.training_data = self.clean(self.training_data)
+      # print("Cleaning training data set. This could take a while...")
+      # self.training_data = self.clean(self.training_data)
       # dump the training data to a pickle file so we dont have to do this every time
       with open(pickle_filepath, "wb") as f:
         pickle.dump(self.training_data, f, pickle.HIGHEST_PROTOCOL)
@@ -137,11 +139,36 @@ class TweetAnalysis:
     self.test_data = self.training_data[:index_for_split]
     self.training_data = self.training_data[index_for_split:]
 
-
-   #Train classifier
+  # Train classifier
   def buildTrainingModel(self):
-    self.forest_classifier = skl.ensemble.RandomForestClassifier(n_estimators=50)
-    self.forest_classifier = self.forest_classifier.fit()
+    train_data = []
+    train_labels = []
+    for d in self.training_data[0:10000]:
+      train_data.append(d['text'])
+      train_labels.append(d['sentiment'])
+    print("Training classifier with {} items".format(len(train_data)))
+    self.vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(min_df=5, max_df = 0.8, sublinear_tf=True, use_idf=True, decode_error='ignore')
+    train_vectors = self.vectorizer.fit_transform(train_data)
+    self.classifier = sklearn.svm.SVC()
+    self.classifier.fit(train_vectors, train_labels)
+    print("Done training classifier!")
+
+    # self.forest_classifier = sklearn.ensemble.RandomForestClassifier(n_estimators=50)
+    # # we need to pass the fit fucntion arguments as a list of texts and a list of sentiments
+    # training_texts = [d['text'] for d in self.training_data]
+    # training_sentiments = [d['sentiment'] for d in self.training_data]
+    # self.forest_classifier = self.forest_classifier.fit(training_texts, training_sentiments)
+
+  def testTrainingModel(self):
+    print("Testing {} known data points against classifier".format(len(self.test_data)))
+    test_data = []
+    test_labels = []
+    for d in self.test_data:
+      test_data.append(d['text'])
+      test_labels.append(d['sentiment'])
+    test_vectors = self.vectorizer.transform(test_data)
+    test_prediction = self.classifier.predict(test_vectors)
+    print(sklearn.metrics.classification_report(test_labels, test_prediction))
 
 #Test classifier
 #Run on real Tweets
@@ -150,5 +177,7 @@ class TweetAnalysis:
 if __name__ == "__main__":
   ta = TweetAnalysis()
   ta.loadTrainingData("sentiment_training_set.csv")
-  ta.fetchRaw("@united", 5)
-  ta.tweets = ta.clean(ta.tweets)
+  #ta.fetchRaw("@united", 5)
+  #ta.tweets = ta.clean(ta.tweets)
+  ta.buildTrainingModel()
+  ta.testTrainingModel()
