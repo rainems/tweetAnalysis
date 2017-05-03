@@ -11,6 +11,9 @@ import sklearn
 import numpy as np
 import pickle
 import os
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import SGDClassifier
 
 kTestTrainingSplitRatio = 0.3
 
@@ -144,12 +147,20 @@ class TweetAnalysis:
     train_data = []
     train_labels = []
     for d in self.training_data[0:10000]:
+      # print(d)
       train_data.append(d['text'])
       train_labels.append(d['sentiment'])
     print("Training classifier with {} items".format(len(train_data)))
     self.vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(min_df=5, max_df = 0.8, sublinear_tf=True, use_idf=True, decode_error='ignore')
     train_vectors = self.vectorizer.fit_transform(train_data)
-    self.classifier = sklearn.svm.SVC()
+    ## Random Forest has 69% accuracy
+    #self.classifier = RandomForestClassifier()
+    ## MultinomialNB has 73% precision rate
+    #self.classifier = MultinomialNB()
+    ## SGD 73% accuracy
+    self.classifier = SGDClassifier()
+    ## SVC 34% accuracy 
+    #self.classifier = sklearn.svm.SVC()
     self.classifier.fit(train_vectors, train_labels)
     print("Done training classifier!")
 
@@ -168,16 +179,32 @@ class TweetAnalysis:
       test_labels.append(d['sentiment'])
     test_vectors = self.vectorizer.transform(test_data)
     test_prediction = self.classifier.predict(test_vectors)
+    print(test_prediction)
     print(sklearn.metrics.classification_report(test_labels, test_prediction))
+    print(sklearn.metrics.confusion_matrix(test_labels, test_prediction))
+
 
 #Test classifier
-#Run on real Tweets
+#Run on real Tweets 
+  def testModel(self, listoftweets):
+    print("Testing {} known data points against classifier".format(len(self.test_data)))
+    test_data = []
+    for d in listoftweets:
+      test_data.append(d['text'])
+      print(d['text'])
+    #for k in self.tweets:
+       #print(k)
+    test_vectors = self.vectorizer.transform(test_data)
+    test_prediction = self.classifier.predict(test_vectors)
+    print(test_prediction)
+
 
 
 if __name__ == "__main__":
   ta = TweetAnalysis()
   ta.loadTrainingData("sentiment_training_set.csv")
-  #ta.fetchRaw("@united", 5)
-  #ta.tweets = ta.clean(ta.tweets)
+  ta.fetchRaw("@united", 5)
+  ta.tweets = ta.clean(ta.tweets)
   ta.buildTrainingModel()
-  ta.testTrainingModel()
+  #ta.testTrainingModel()
+  ta.testModel(ta.tweets)
