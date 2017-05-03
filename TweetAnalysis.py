@@ -84,6 +84,8 @@ class TweetAnalysis:
     list_of_tweets = [w for w in list_of_tweets if "RT @" not in w['text']]
     print("Removed {} retweets from our tweets list".format(original_cnt - len(list_of_tweets)))
 
+    #print(list_of_tweets)
+    self.rawtweets = list(list_of_tweets)
     progress_cnt = 0
     for tweet_dict in list_of_tweets:
       # print("Before clean:\n{}".format(tweet_dict['text']))
@@ -197,6 +199,10 @@ class TweetAnalysis:
     test_vectors = self.vectorizer.transform(test_data)
     test_prediction = self.classifier.predict(test_vectors)
     print(test_prediction)
+    print(self.rawtweets)
+    for i in range(len(self.rawtweets)):
+        self.rawtweets[i]['sentiment'] = test_prediction[i]
+    print(self.rawtweets)
 
 
 
