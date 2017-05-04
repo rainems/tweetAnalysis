@@ -7,49 +7,37 @@
         crossorigin="anonymous">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
-        crossorigin="anonymous"> {% block head %}
+        crossorigin="anonymous">
     <link rel="icon" href="{{url_for('static', filename='logo.png')}}">
+
     <title>{{title}}</title>
-    {% endblock %}
 </head>
 
 <body>
 
-    <div class='jumbotron jumbotron-fluid'>
-        <div class='row'>
-            <div class='col-sm-12 text-center'>
-                <img src="{{url_for('static', filename='logo.png')}}" class="center-block" height="150" width="auto" alt="Responsive image"
-                    </img>
-            </div>
-        </div>
-    </div>
-
-    <br>
-
     <div class='container-fluid'>
-
-        <div class='row'>
+        <div class='row content'>
             <div class='col-md-4'>
-
-                {% block filter1 %} Search for tweets here {% endblock %} {% block filter2 %} Search Here {% endblock %}
+                {% block filters %} Search Here {% endblock %}
             </div>
-            <div class='col-md-8' padding-top: '50px'>
-                <div class='container'>
-                    <br>
-                </div>
+            <div class='col-md-8' style='padding-top: 50px;'>
                 {% block data %} Tweets will be listed here {% endblock %}
             </div>
         </div>
 
-        <!-- jQuery 2.x -->
-        <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
-            crossorigin="anonymous"></script>
-
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-
-        <!-- Latest compiled and minified JavaScript -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-            crossorigin="anonymous"></script>
-        {% block footer %} {% endblock %}
+        <div class='footer'>{% block footer %} {% endblock %} </div>
     </div>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- jQuery 3.2.1 -->
+    <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    {% block script %} {% endblock %}
+
 </body>

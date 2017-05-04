@@ -2,11 +2,18 @@
 import os
 import time
 import json
+import numpy as np
 from twitter import *
 from flask import Flask, request, render_template, redirect, abort, flash, jsonify
 from geopy.geocoders import Nominatim
 from random import randint
 import collections
+from sklearn.externals import joblib
+from sklearn.linear_model import SGDRegressor
+
+sentiment_clf = joblib.load('checkpoints/reg.pkl')
+vectorizer = joblib.load('checkpoints/vectorizer.pkl')
+
 geolocator = Nominatim()
 
 app = Flask(__name__)   # create our flask app
@@ -19,86 +26,68 @@ twitter = Twitter(auth=OAuth(
     'FQA4pFzrPWgVCbsUu5nXi5eWbH2T1gD7bkDAogtRmyTjzUjxNO',
 ))
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def main():
-    query = request.args.get('q', False)
-    geo = request.args.get('g', "")
-    
-            
-    if query:
-        if geo:
-            try:
-                #Use google maps to get location from name
-                geo_temp = geolocator.geocode(geo)
+    if request.method == 'GET':
+        templateData = {
+            'title': 'Twitter Analysis',
+        }
+    else:  # POST request
+        keywords = request.form.get('keywords', '')
+        location = request.form.get('location', '')
+        if location:
+            geocode = get_geocode_from_str(location)
+        else:
+            geocode = '' 
 
-                #Search String for twitter Api
-                geocode = str(geo_temp.latitude) + "," + str(geo_temp.longitude) + ",50mi"
+        results = twitter.search.tweets(q=keywords, geocode=geocode, count=100).get('statuses')
 
-                #Get google maps correct term for place
-                geo = str(geo).split(',')[0]
-                geo = geo[:len(geo)]
-
-                #Search twitter API
-                results = twitter.search.tweets(q=query, geocode=geocode, count=1000).get('statuses')
-                
-                #Interpolate missing places
-                place = []
-                c = collections.Counter()
-                for each in results:
-                    if each['place']:
-                        c.update([each['place']['full_name']])
-    
-                place = c.most_common(1)
-                place = place[0][0]
-                
-                
-
-            except: #Catch when geocoder doesnt recognize the place
-                results = twitter.search.tweets(q=query, count=60).get('statuses')
-                place = geo
-
-        else:  #When there is no location search parameter
-            results = twitter.search.tweets(q=query, count=60).get('statuses')
-            place = ""
-        
+        classify_tweet_sentiments(results)
 
         #Temporary lists to be replaced with sentiment analysis
-        positive = results[0 : 20]
-        neutral = results[20 : 40]
-        negative = results[40 : 60]
+        positive = results[0:20]
+        neutral = results[20:40]
+        negative = results[40:60]
         
         templateData = {
             'title': 'Search results',
-            'header' : 'Query: ' + query,
-            'positive' : positive,
-	    'neutral' : neutral,
-	    'negative' : negative,
-        'positive_len' : len(positive) ,
-        'neutral_len' : len(neutral) ,
-        'negative_len' : len(negative) ,
-        'query' : query,
-
-        ##when geo is more than one word it doesnt show the second word
-        'geocode' : geo,
-        'place' : place
-        }
-
-    else:
-	
-        templateData = {
-            'title': 'Twitter Analysis',
-            'header' : 'Peep some tweets homie',
-            'positive' : None,
-	    'neutral' : None,
-	    'negative' : None,
-        'positive_len' : 0,
-        'neutral_len' : 0 ,
-        'negative_len' : 0 ,
-        'query' : "",
-        'geocode' : "",
+            'positive': positive,
+            'neutral': neutral,
+            'negative': negative,
+            'keywords': keywords,
+            'location': location,
         }
 
     return render_template('index.html', **templateData)
+
+
+def classify_tweet_sentiments(tweets, clf=sentiment_clf):
+    tweet_strs = np.array([t['text'] for t in tweets])
+    vectorized = vectorizer.transform(tweet_strs)
+    sentiments = clf.predict(vectorized).round(2)
+    for i, tweet in enumerate(tweets):
+        tweet.update({'sentiment': sentiments[i]})
+    return tweets
+
+
+def get_geocode_from_str(geo_query):
+    #Use google maps to get location from name
+    geo_obj = geolocator.geocode(geo_query)
+    #Search String for twitter Api
+    geocode = str(geo_obj.latitude) + ',' + str(geo_obj.longitude) + ',50mi'
+    #Get google maps correct term for place
+    geo_query = str(geo_query).split(',')[0]
+    return geo_query
+
+
+def interpolate_missing_locations(tweets):
+    c = collections.Counter()
+    for tweet in tweets:
+        if tweet['place']:
+            c.update([tweet['place']['full_name']])
+    place = c.most_common(1)
+    place = place[0][0]
+    return place
 
 
 # This is a jinja custom filter
@@ -107,12 +96,6 @@ def _jinja2_filter_datetime(date, fmt=None):
     pyDate = time.strptime(date,'%a %b %d %H:%M:%S +0000 %Y') # convert twitter date string into python date/time
     return time.strftime('%Y-%m-%d %H:%M:%S', pyDate) # return the formatted date.
     
-# --------- Server On ----------
-# start the webserver
-if __name__ == "__main__":
-	app.debug = True
-	
-	port = int(os.environ.get('PORT', 5000)) # locally PORT 5000, Heroku will assign its own port
-	app.run(host='0.0.0.0', port=port)
-
-
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

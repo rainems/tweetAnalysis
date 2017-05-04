@@ -93,3 +93,8 @@ ENV/
 
 # Pickle files
 *.pickle
+*.pkl
+
+# Vim
+*.swp
+*.swo

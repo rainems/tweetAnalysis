@@ -1,33 +1,30 @@
-{% extends 'base.html' %} {% block filter1 %}
-<h2>{{header}}</h2>
+{% extends 'base.html' %}
 
-<div class="input-group">
-    <input type="text" id="tweetSearchQuery" class="form-control" value={{query}}>
-    <span class="input-group-btn">
-			<button class="btn btn-default" id="tweetSearchBtn" type="button">Go</button>
-		</span>
-</div>
-<!-- /input-group -->
-{% endblock %} {% block filter2 %}
-<h4>Location</h4>
-<div class="input-group">
-    <input type="text" id="tweetFilterQuery" class="form-control" placeholder="e.g. 'NYC' 'new york' 'manhattan'" value={{geocode}}> <span class="input-group-btn">
-    <button class="btn btn-default" id="tweetFilterBtn" type="button">Filter</button>
-    </span>
-</div>
-
+<!-- search filters -->
+{% block filters %}
+    <h3>Tweet Filters</h3>
+    <form id='searchFiltersForm' action='/' method='post'>
+        <div class="input-group">
+            <div class="input-group-addon">Keywords</div>
+            <input type="text" id="tweetSearchQuery" class="form-control" name='keywords' value={{keywords}}>
+        </div>
+        <div class="input-group">
+            <div class="input-group-addon">Location</div>
+            <input type="text" id="tweetGeocodeQuery" class="form-control" name='location' placeholder="e.g. 'NYC' 'new york' 'manhattan'" value={{location}}>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+    </form>
 {% endblock %}
 
 <!-- data block -->
 
 {% block data %}
-
 <div class="panel-group">
     <div class="panel panel-default">
         <div class="panel-heading">
             <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapse1">Negative Sentiment <span class="badge pull-right">
- {{ negative_len }}</span>
+                <a data-toggle="collapse" href="#collapse1">Negative Sentiment<span class="badge pull-right">
+ {{ negative|length }}</span>
 </a>
             </h4>
         </div>
@@ -37,10 +34,11 @@
                 {% if not negative %} No tweets to display. Sad! {% else %} {% for t in negative %}
                 <li class="list-group-item">
                     <p>
+                        <b>Score: {{ t.sentiment }}</b>
                         {{ t.text }}
                         <br>
                         <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>>
-                        <br>{% if t.place %} {{t.place.full_name}} {% else %} {{place}} {% endif %} </p>
+                        <br>{% if t.place %} {{t.place.full_name}} {% endif %} </p>
 
                 </li>
                 {% endfor %} {% endif %}
@@ -56,20 +54,19 @@
         <div class="panel-heading">
             <h4 class="panel-title">
                 <a data-toggle="collapse" href="#collapse2">Neutral Sentiment <span class="badge pull-right">
- {{ neutral_len }}</span> </a>
+ {{ neutral|length }}</span> </a>
             </h4>
         </div>
         <div id="collapse2" class="panel-collapse collapse">
-
-
             <ul class="list-group">
                 {% if not neutral %} No tweets to display. Sad! {% else %} {% for t in neutral %}
                 <li class="list-group-item">
                     <p>
+                        <b>Score: {{ t.sentiment }}</b>
                         {{ t.text }}
                         <br>
                         <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
-                        <br>{% if t.place %} {{t.place.full_name}} {% else %} {{place}} {% endif %} </p>
+                        <br>{% if t.place %} {{t.place.full_name}} {% endif %} </p>
 
                     </p>
 
@@ -86,7 +83,7 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapse3">Positive Sentiment <span class="badge pull-right"> {{ positive_len }}</span> </a>
+                <a data-toggle="collapse" href="#collapse3">Positive Sentiment <span class="badge pull-right"> {{ positive|length }}</span> </a>
             </h4>
         </div>
         <div id="collapse3" class="panel-collapse collapse">
@@ -94,10 +91,11 @@
                 {% if not positive %} No tweets to display. Sad! {% else %} {% for t in positive %}
                 <li class="list-group-item">
                     <p>
+                        <b>Score: {{ t.sentiment }}</b>
                         {{ t.text }}
                         <br>
                         <strong>@{{ t.user.screen_name }}</strong> | <a href="https://www.twitter.com/{{t.user.screen_name}}/status/{{t.id}}">link</a>
-                        <br>{% if t.place %} {{t.place.full_name}} {% else %} {{place}} {% endif %}</p>
+                        <br>{% if t.place %} {{t.place.full_name}} {% endif %}</p>
 
                     </p>
 
@@ -108,34 +106,21 @@
         </div>
     </div>
 </div>
-{% endblock %} {% block footer %}
+{% endblock %} {% block script %}
 <script type="text/javascript">
     $(document).ready(function () {
-        /* Go to search page when you hit Go */
-        $('#tweetSearchBtn').click(function (e) {
-            let searchString = $('#tweetSearchQuery').val();
-            let filterString = $('#tweetFilterQuery').val();
-            document.location.href = '/?q=' + searchString + '&g=' + filterString;
-        });
-        $('#tweetFilterBtn').click(function (e) {
-            let searchString = $('#tweetSearchQuery').val();
-            let filterString = $('#tweetFilterQuery').val();
-            document.location.href = '/?q=' + searchString + '&g=' + filterString;
-        });
 
         /* Also go to search when you press enter in search bar */
         $('#tweetSearchQuery').keypress(function (e) {
             let key = e.which;
             if (key == 13) { // enter key
-                $('#tweetSearchBtn').click();
             }
         });
 
-        /* Also go to search when you press enter in filter bar */
-        $('#tweetFilterQuery').keypress(function (e) {
+        /* Also go to search when you press enter in geocode bar */
+        $('#tweetGeocodeQuery').keypress(function (e) {
             let key = e.which;
             if (key == 13) { // enter key 
-                $('#tweetFilterBtn').click();
             }
         });
     });
