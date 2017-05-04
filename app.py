@@ -12,11 +12,12 @@ geolocator = Nominatim()
 app = Flask(__name__)   # create our flask app
 
 # configure Twitter API
-twitter = Twitter(
-            auth=OAuth('2223635090-IaNrBG3WiiPnWTVtxupFCgB5TXAtlzKeQYRdrKu',
-                'PDfV4DDZjB4T2EbnVAzsZCdDUMNJYDPLYlYErfuhcTNPE',
-                       'nrZxSV89t9pvZsbWHjXs7Y8vZ',
-                       'FQA4pFzrPWgVCbsUu5nXi5eWbH2T1gD7bkDAogtRmyTjzUjxNO'))
+twitter = Twitter(auth=OAuth(
+    '2223635090-IaNrBG3WiiPnWTVtxupFCgB5TXAtlzKeQYRdrKu',
+    'PDfV4DDZjB4T2EbnVAzsZCdDUMNJYDPLYlYErfuhcTNPE',
+    'nrZxSV89t9pvZsbWHjXs7Y8vZ',
+    'FQA4pFzrPWgVCbsUu5nXi5eWbH2T1gD7bkDAogtRmyTjzUjxNO',
+))
 
 @app.route('/')
 def main():
