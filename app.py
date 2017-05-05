@@ -3,9 +3,8 @@ import os
 import time
 import json
 import numpy as np
-from twitter import *
+import twitter
 from flask import Flask, request, render_template, redirect, abort, flash, jsonify
-from geopy.geocoders import Nominatim
 from random import randint
 import collections
 from sklearn.externals import joblib
@@ -14,12 +13,10 @@ from sklearn.linear_model import SGDRegressor
 sentiment_clf = joblib.load('checkpoints/reg.pkl')
 vectorizer = joblib.load('checkpoints/vectorizer.pkl')
 
-geolocator = Nominatim()
-
 app = Flask(__name__)   # create our flask app
 
 # configure Twitter API
-twitter = Twitter(auth=OAuth(
+api = twitter.Twitter(auth=twitter.OAuth(
     '2223635090-IaNrBG3WiiPnWTVtxupFCgB5TXAtlzKeQYRdrKu',
     'PDfV4DDZjB4T2EbnVAzsZCdDUMNJYDPLYlYErfuhcTNPE',
     'nrZxSV89t9pvZsbWHjXs7Y8vZ',
@@ -33,29 +30,31 @@ def main():
             'title': 'Twitter Analysis',
         }
     else:  # POST request
-        keywords = request.form.get('keywords', '')
-        location = request.form.get('location', '')
-        if location:
-            geocode = get_geocode_from_str(location)
-        else:
-            geocode = '' 
+        keywords = request.form.get('keywords', '').strip()
+        exclude = request.form.get('exclude', '').strip()
+        from_user = request.form.get('from_user', '').strip()
+        to_user = request.form.get('to_user', '').strip()
 
-        results = twitter.search.tweets(q=keywords, geocode=geocode, count=100).get('statuses')
+        query = ' '.join((
+            keywords,
+            ('-' + ' -'.join(exclude.split())) if exclude else '',  # excludes
+            ('from:' + from_user) if from_user else '',  # from user
+            ('to:' + to_user) if to_user else '',  # to user
+        ))
+        query += ' -filter:retweets'
+        print(query)
+        results = api.search.tweets(q=query, count=100).get('statuses')
+        print('results:', len(results))
+        tweets = classify_tweet_sentiments(results)
+        tweet_buckets = get_sentiment_buckets(tweets)
 
-        classify_tweet_sentiments(results)
-
-        #Temporary lists to be replaced with sentiment analysis
-        positive = results[0:20]
-        neutral = results[20:40]
-        negative = results[40:60]
-        
         templateData = {
             'title': 'Search results',
-            'positive': positive,
-            'neutral': neutral,
-            'negative': negative,
+            'tweet_buckets': tweet_buckets,
             'keywords': keywords,
-            'location': location,
+            'exclude': exclude,
+            'from_user': from_user,
+            'to_user': to_user,
         }
 
     return render_template('index.html', **templateData)
@@ -70,24 +69,23 @@ def classify_tweet_sentiments(tweets, clf=sentiment_clf):
     return tweets
 
 
-def get_geocode_from_str(geo_query):
-    #Use google maps to get location from name
-    geo_obj = geolocator.geocode(geo_query)
-    #Search String for twitter Api
-    geocode = str(geo_obj.latitude) + ',' + str(geo_obj.longitude) + ',50mi'
-    #Get google maps correct term for place
-    geo_query = str(geo_query).split(',')[0]
-    return geo_query
-
-
-def interpolate_missing_locations(tweets):
-    c = collections.Counter()
+def get_sentiment_buckets(tweets, thresholds=[0.3, 0.6]):
+    buckets = {
+        'neg': [],
+        'neu': [],
+        'pos': [],
+    }
     for tweet in tweets:
-        if tweet['place']:
-            c.update([tweet['place']['full_name']])
-    place = c.most_common(1)
-    place = place[0][0]
-    return place
+        if tweet['sentiment'] > thresholds[1]:  # positive tweet
+            buckets['pos'].append(tweet)
+        elif tweet['sentiment'] >= thresholds[0]:
+            buckets['neu'].append(tweet)
+        else:
+            buckets['neg'].append(tweet)
+    buckets['neu'][:100].sort(key=lambda t: t['sentiment'], reverse=True)
+    buckets['pos'].sort(key=lambda t: t['sentiment'], reverse=True)
+    buckets['neg'].sort(key=lambda t: t['sentiment'])
+    return buckets
 
 
 # This is a jinja custom filter
