@@ -28,6 +28,7 @@ def main():
     if request.method == 'GET':
         templateData = {
             'title': 'Twitter Analysis',
+            'words': '',
         }
     else:  # POST request
         keywords = request.form.get('keywords', '').strip()
@@ -55,6 +56,7 @@ def main():
             'exclude': exclude,
             'from_user': from_user,
             'to_user': to_user,
+            'words': get_tweets_words(tweet_buckets['pos']),
         }
 
     return render_template('index.html', **templateData)
@@ -67,6 +69,19 @@ def classify_tweet_sentiments(tweets, clf=sentiment_clf):
     for i, tweet in enumerate(tweets):
         tweet.update({'sentiment': sentiments[i]})
     return tweets
+
+
+def get_tweets_words(tweets):
+    """wordcounts = {}
+    words = []
+    for tweet in tweets:
+        words.extend(tweet['text'].strip().split())
+    for word in words:
+        wordcounts[word] = wordcounts.get(word, 0) + 1
+    ret = [{k: wordcounts[k]} for k in wordcounts]
+    return ret
+    """
+    return [' '.join(t['text'] for t in tweets)]
 
 
 def get_sentiment_buckets(tweets, thresholds=[0.3, 0.6]):
