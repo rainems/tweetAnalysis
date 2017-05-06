@@ -45,6 +45,14 @@ def main():
         query += ' -filter:retweets'
         print(query)
         results = api.search.tweets(q=query, count=100).get('statuses')
+
+        if len(results) == 0:
+            templateData = {
+                'title': 'Twitter Analysis',
+                'words': '',
+            }
+            return render_template('index.html', **templateData)
+
         print('results:', len(results))
         tweets = classify_tweet_sentiments(results)
         tweet_buckets = get_sentiment_buckets(tweets)
@@ -65,26 +73,27 @@ def main():
 def classify_tweet_sentiments(tweets, clf=sentiment_clf):
     tweet_strs = np.array([t['text'] for t in tweets])
     vectorized = vectorizer.transform(tweet_strs)
-    sentiments = clf.predict(vectorized).round(2)
+    sentiments = clf.predict(vectorized).round(2).clip(0, 1)
     for i, tweet in enumerate(tweets):
         tweet.update({'sentiment': sentiments[i]})
     return tweets
 
 
 def get_tweets_words(tweets):
-    """wordcounts = {}
+    """
+    wordcounts = {}
     words = []
     for tweet in tweets:
         words.extend(tweet['text'].strip().split())
     for word in words:
         wordcounts[word] = wordcounts.get(word, 0) + 1
-    ret = [{k: wordcounts[k]} for k in wordcounts]
-    return ret
+    ret = [{'text': k, 'size': wordcounts[k]} for k in wordcounts]
     """
+    
     return [' '.join(t['text'] for t in tweets)]
 
 
-def get_sentiment_buckets(tweets, thresholds=[0.3, 0.6]):
+def get_sentiment_buckets(tweets, thresholds=[0.4, 0.6]):
     buckets = {
         'neg': [],
         'neu': [],
